@@ -1,0 +1,7 @@
+=== RUN TestWithOutput
+--- PASS: TestWithOutput (0.06 seconds)
+    some system output
+=== RUN TestWithNoOutput
+--- PASS: TestWithNoOutput (0.10 seconds)
+PASS
+ok  	package/name 0.160s
