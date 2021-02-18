@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jstemmer/go-junit-report/formatter"
-	"github.com/jstemmer/go-junit-report/parser"
+	"github.com/thecapdan/go-junit-report/formatter"
+	"github.com/thecapdan/go-junit-report/parser"
 )
 
 var matchTest = flag.String("match", "", "only test testdata matching this pattern")
@@ -1512,7 +1512,7 @@ var testCases = []TestCase{
 		report: &parser.Report{
 			Packages: []parser.Package{
 				{
-					Name:     "github.com/jstemmer/test/failedsummary",
+					Name:     "github.com/thecapdan/test/failedsummary",
 					Duration: 5 * time.Millisecond,
 					Time:     5,
 					Tests: []*parser.Test{
@@ -1664,13 +1664,64 @@ func testJUnitFormatter(t *testing.T, goVersion string) {
 
 		var junitReport bytes.Buffer
 
-		if err = formatter.JUnitReportXML(testCase.report, testCase.noXMLHeader, goVersion, &junitReport); err != nil {
+		if err = formatter.JUnitReportXML(testCase.report, testCase.noXMLHeader, goVersion, false, &junitReport); err != nil {
 			t.Fatal(err)
 		}
 
 		if string(junitReport.Bytes()) != report {
 			t.Errorf("Fail: %s Report xml ==\n%s, want\n%s", testCase.name, string(junitReport.Bytes()), report)
 		}
+	}
+}
+
+func TestIncludeOutputFlag(t *testing.T) {
+	goVersion := ""
+	includeOutput := true
+	testCase := TestCase{
+		name:       "33-pass-with-output.txt",
+		reportName: "33-pass-with-output.xml",
+		report: &parser.Report{
+			Packages: []parser.Package{
+				{
+					Name:     "package/name",
+					Duration: 160 * time.Millisecond,
+					Time:     160,
+					Tests: []*parser.Test{
+						{
+							Name:     "TestWithOutput",
+							Duration: 60 * time.Millisecond,
+							Time:     60,
+							Result:   parser.PASS,
+							Output: []string{
+								"some system output",
+							},
+						},
+						{
+							Name:     "TestWithNoOutput",
+							Duration: 100 * time.Millisecond,
+							Time:     100,
+							Result:   parser.PASS,
+							Output:   []string{},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	report, err := loadTestReport(testCase.reportName, goVersion)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var junitReport bytes.Buffer
+
+	if err = formatter.JUnitReportXML(testCase.report, testCase.noXMLHeader, goVersion, includeOutput /* true */, &junitReport); err != nil {
+		t.Fatal(err)
+	}
+
+	if string(junitReport.Bytes()) != report {
+		t.Errorf("Fail: %s Report xml ==\n%s, want\n%s", testCase.name, string(junitReport.Bytes()), report)
 	}
 }
 

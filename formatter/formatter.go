@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jstemmer/go-junit-report/parser"
+	"github.com/thecapdan/go-junit-report/parser"
 )
 
 // JUnitTestSuites is a collection of JUnit test suites.
@@ -38,6 +38,7 @@ type JUnitTestCase struct {
 	Time        string            `xml:"time,attr"`
 	SkipMessage *JUnitSkipMessage `xml:"skipped,omitempty"`
 	Failure     *JUnitFailure     `xml:"failure,omitempty"`
+	Output      string            `xml:"system-out,omitempty"`
 }
 
 // JUnitSkipMessage contains the reason why a testcase was skipped.
@@ -60,7 +61,7 @@ type JUnitFailure struct {
 
 // JUnitReportXML writes a JUnit xml representation of the given report to w
 // in the format described at http://windyroad.org/dl/Open%20Source/JUnit.xsd
-func JUnitReportXML(report *parser.Report, noXMLHeader bool, goVersion string, w io.Writer) error {
+func JUnitReportXML(report *parser.Report, noXMLHeader bool, goVersion string, includeOutput bool, w io.Writer) error {
 	suites := JUnitTestSuites{}
 
 	// convert Report to JUnit test suites
@@ -92,11 +93,18 @@ func JUnitReportXML(report *parser.Report, noXMLHeader bool, goVersion string, w
 
 		// individual test cases
 		for _, test := range pkg.Tests {
+			var output string
+
+			if includeOutput {
+				output = strings.Join(test.Output, "\n")
+			}
+
 			testCase := JUnitTestCase{
 				Classname: classname,
 				Name:      test.Name,
 				Time:      formatTime(test.Duration),
 				Failure:   nil,
+				Output:    output,
 			}
 
 			if test.Result == parser.FAIL {
